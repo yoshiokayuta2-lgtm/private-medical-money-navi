@@ -31,6 +31,8 @@
 ├── assets/
 │   ├── css/
 │   │   └── styles.css
+│   ├── img/
+│   │   └── （Yoshiキャラクター画像）
 │   └── js/
 │       └── app.js
 ├── .nojekyll
@@ -42,6 +44,7 @@
 
 大学データ、所在地別家賃データ、比較ロジックは `assets/js/app.js` にあります。
 デザインは `assets/css/styles.css` にあります。
+キャラクター画像は `assets/img/` にあります。
 ページ本文は `index.html` にあります。
 
 ### 国公立医学科ナビへのリンク
