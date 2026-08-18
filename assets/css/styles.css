@@ -58,3 +58,19 @@
 #calculator{scroll-margin-top:170px}
 #finder{scroll-margin-top:170px}
 @media(max-width:760px){#calculator,#finder{scroll-margin-top:145px}}
+
+/* Back to top */
+.top-return{
+  position:fixed;right:28px;bottom:28px;z-index:44;
+  width:58px;height:58px;background:var(--ink);color:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:1px;text-decoration:none;box-shadow:0 10px 26px rgba(20,25,38,.18);
+  transition:transform .18s ease, background .18s ease;
+}
+.top-return:hover{transform:translateY(-3px);background:var(--private)}
+.top-return span{font-size:20px;line-height:1;font-weight:900}
+.top-return small{font-size:8px;letter-spacing:.08em;font-weight:900}
+@media(max-width:760px){
+  .top-return{right:14px;bottom:14px;width:50px;height:50px}
+  .top-return span{font-size:18px}
+}
