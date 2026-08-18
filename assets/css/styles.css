@@ -74,3 +74,20 @@
   .top-return{right:14px;bottom:14px;width:50px;height:50px}
   .top-return span{font-size:18px}
 }
+
+/* v19 UX polish */
+.hero .lead strong{font-weight:900;color:var(--ink)}
+.minimoney small{display:block;margin-top:3px;font-size:8px;color:#8a8a8a;line-height:1.35}
+.cost-insight{margin:10px 0 0;padding:9px 11px;background:#f7f4f1;border-left:3px solid var(--gold);font-size:10px;font-weight:800;line-height:1.55;color:#4d4d53}
+.extra-callout{margin:10px 0 12px;padding:11px 12px;background:#fff4ec;border:1px solid #f0c8b5}
+.extra-callout span{display:block;font-size:8px;font-weight:900;letter-spacing:.08em;color:var(--private);margin-bottom:4px}
+.extra-callout b{display:block;font-size:10px;line-height:1.55;color:var(--ink)}
+.compare-status{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.comparehint{font-size:10px;color:#ffd9c5;font-weight:800}
+.comparebar:not(.hidden){animation:compareIn .2s ease-out}
+@keyframes compareIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+@media(max-width:760px){
+  .cost-insight,.extra-callout b{font-size:10px}
+  .compare-status{width:100%;justify-content:space-between}
+  .comparehint{font-size:9px}
+}

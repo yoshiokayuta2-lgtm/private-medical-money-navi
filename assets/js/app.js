@@ -63,9 +63,27 @@ function updateCompareBar(){
   bar.classList.toggle('hidden',selected.length===0);
   document.querySelector('#opencompare').disabled=selected.length<2;
   document.querySelector('#opencompare').style.opacity=selected.length<2?'.55':'1';
+  const hint=document.querySelector('#comparehint');
+  if(hint){hint.textContent=selected.length===1?'あと2校選べます':selected.length===2?'あと1校選べます':selected.length===3?'3校選択済み':'あと3校選べます';}
 }
+
 function defaultLife(x){const rent=prefRent30[x.pref]||59656;return Math.max(0,Math.min(25,Math.round((rent+55000)/10000)))}
 function burden(x){return x.total==null?null:x.total+defaultLife(x)*72}
+function rankAmongPriced(x,key){
+  if(x.total==null)return null;
+  const priced=data.filter(d=>d.total!=null);
+  const sorted=[...priced].sort((a,b)=>{const av=key==='burden'?burden(a):a[key],bv=key==='burden'?burden(b):b[key];return (av??99999)-(bv??99999)});
+  const idx=sorted.findIndex(d=>d.name===x.name);return idx>=0?idx+1:null;
+}
+function costInsight(x){
+  if(x.total==null)return '特殊制度校のため、通常の学費順位とは分けて確認';
+  const tr=rankAmongPriced(x,'total'),br=rankAmongPriced(x,'burden');
+  if(!tr||!br)return '';
+  const diff=br-tr;
+  if(diff>=5)return `学費は${tr}位 → 生活費込みでは${br}位。所在地で負担感が変わります。`;
+  if(diff<=-5)return `学費は${tr}位 → 生活費込みでは${br}位。生活費を含めると相対的に有利です。`;
+  return `学費${tr}位／生活費込み${br}位。大きな順位差はありません。`;
+}
 function updateSnapshot(){
   const priced=data.filter(x=>x.total!=null);
   const minTotal=[...priced].sort((a,b)=>a.total-b.total)[0];
@@ -103,7 +121,13 @@ function render(){
   const load=document.querySelector('#loadmore');
   load.classList.toggle('hidden',more<=0);
   load.textContent=more>0?`さらに${Math.min(8,more)}件を表示（残り${more}件）`:'すべて表示中';
-  document.querySelector('#cards').innerHTML=shown.map((x,i)=>`<article class="card ${x.total==null&&!x.status.includes('公式確認済み')?'pendingcard':''}"><div class="topline"><span><span class="badge">${x.badge}</span></span><span class="rank">${x.total==null?'SPECIAL':'#'+(i+1)}</span></div><h3>${x.name}</h3><div class="place">${x.place}</div><div class="primarymoney ${x.total==null?'pendingmoney':''}"><span>${x.total==null?'学費の扱い':'6年間学費'}</span><b>${x.total==null?'修学資金制度':yen(x.total)}</b><small>${x.total==null?'通常の学費ランキング外':'大学公表額ベース'}</small></div><div class="minimoney"><div class="${x.first==null?'pendingmoney':''}"><span>初年度</span><b>${x.first==null?'制度対象':yen(x.first)}</b></div><div><span>生活費 初期値</span><b>月${defaultLife(x)}万円</b></div><div class="${x.total==null?'pendingmoney':''}"><span>生活費込み</span><b>${x.total==null?'条件で変動':yen(burden(x))}</b></div></div><div class="tags">${x.tags.slice(0,3).map(t=>`<span class="tag">${t}</span>`).join('')}</div><details class="tipdetails"><summary>先に知っておきたい</summary><div class="tipbody">${x.tip}</div></details><div class="actions">${x.url?`<a class="btn primary" target="_blank" rel="noopener" href="${x.url}">公式で確認</a>`:`<span class="btn" aria-disabled="true">公式資料を調査中</span>`}<button class="btn ${selected.includes(x.name)?'selected':''}" ${x.total==null?'disabled title="学費確認後に比較できます"':''} data-compare="${escapeHtml(x.name)}">${x.total==null?'比較準備中':selected.includes(x.name)?'比較から外す':'比較に追加'}</button></div></article>`).join('')||'<p>条件に合う大学がありません。</p>';
+  document.querySelector('#cards').innerHTML=shown.map(x=>{
+    const totalRank=rankAmongPriced(x,'total');
+    const burdenRank=rankAmongPriced(x,'burden');
+    const extraText=x.extra&&x.extra.trim()?x.extra:'公式公開資料で金額確認中';
+    return `<article class="card ${x.total==null&&!x.status.includes('公式確認済み')?'pendingcard':''}"><div class="topline"><span><span class="badge">${x.badge}</span></span><span class="rank">${x.total==null?'SPECIAL':'学費 #'+totalRank}</span></div><h3>${x.name}</h3><div class="place">${x.place}</div><div class="primarymoney ${x.total==null?'pendingmoney':''}"><span>${x.total==null?'学費の扱い':'6年間学費'}</span><b>${x.total==null?'修学資金制度':yen(x.total)}</b><small>${x.total==null?'通常の学費ランキング外':'大学公表額ベース'}</small></div><div class="minimoney"><div class="${x.first==null?'pendingmoney':''}"><span>初年度</span><b>${x.first==null?'制度対象':yen(x.first)}</b></div><div><span>生活費 初期値</span><b>月${defaultLife(x)}万円</b><small>県平均ベース</small></div><div class="${x.total==null?'pendingmoney':''}"><span>生活費込み</span><b>${x.total==null?'条件で変動':yen(burden(x))}</b>${x.total==null?'':`<small>総負担 #${burdenRank}</small>`}</div></div><div class="cost-insight">${escapeHtml(costInsight(x))}</div><div class="extra-callout"><span>先に確認したい別途費用</span><b>${escapeHtml(extraText)}</b></div><div class="tags">${x.tags.slice(0,3).map(t=>`<span class="tag">${t}</span>`).join('')}</div><details class="tipdetails"><summary>制度・注意点を詳しく見る</summary><div class="tipbody">${x.tip}</div></details><div class="actions">${x.url?`<a class="btn primary" target="_blank" rel="noopener" href="${x.url}">公式で確認</a>`:`<span class="btn" aria-disabled="true">公式資料を調査中</span>`}<button class="btn ${selected.includes(x.name)?'selected':''}" ${x.total==null?'disabled title="学費確認後に比較できます"':''} data-compare="${escapeHtml(x.name)}">${x.total==null?'比較準備中':selected.includes(x.name)?'比較から外す':'比較に追加'}</button></div></article>`;
+  }).join('')||'<p>条件に合う大学がありません。</p>';
+  document.querySelectorAll('[data-compare]').forEach(btn=>btn.addEventListener('click',()=>toggleCompare(btn.dataset.compare)));
 }
 function resetAndRender(){visibleCount=8;render()}
 
