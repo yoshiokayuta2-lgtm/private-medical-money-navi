@@ -52,3 +52,9 @@
 @keyframes feedbackIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
 .toolbar{background:rgba(255,248,243,.96)}
 @media(max-width:760px){.sort-feedback{font-size:11px;margin-bottom:8px}.snapshot-card.active::after{top:10px;right:10px}}
+
+
+/* v17 navigation polish */
+#calculator{scroll-margin-top:170px}
+#finder{scroll-margin-top:170px}
+@media(max-width:760px){#calculator,#finder{scroll-margin-top:145px}}
