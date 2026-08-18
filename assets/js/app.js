@@ -190,7 +190,12 @@ function applySnapshotSort(btn){
   document.querySelector('#status').value='priced';
   document.querySelectorAll('[data-snapshot-sort]').forEach(card=>{const active=card===btn;card.classList.toggle('active',active);card.setAttribute('aria-pressed',active?'true':'false')});
   const feedback=document.querySelector('#sortFeedback');
-  if(feedback){feedback.textContent=`${snapshotLabels[sortKey]}に切り替えました。大学一覧をこの順で表示しています。`;feedback.classList.add('show');}
+  if(feedback){
+    feedback.textContent=`${snapshotLabels[sortKey]}に切り替えました。大学一覧をこの順で表示しています。`;
+    feedback.classList.add('show');
+    clearTimeout(window.__sortFeedbackTimer);
+    window.__sortFeedbackTimer=setTimeout(()=>feedback.classList.remove('show'),2200);
+  }
   resetAndRender();
   setTimeout(()=>document.querySelector('#finder').scrollIntoView({behavior:'smooth',block:'start'}),80);
 }
