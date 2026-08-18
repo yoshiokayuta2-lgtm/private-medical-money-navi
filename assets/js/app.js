@@ -149,5 +149,27 @@ function applyPrefectureDefault(){
 calcUniversity.innerHTML=data.filter(x=>x.total!=null).map(x=>'<option value="'+escapeHtml(x.name)+'">'+escapeHtml(x.name)+'（'+escapeHtml(x.pref)+'）</option>').join('');
 calcUniversity.addEventListener('change',applyPrefectureDefault);
 life.addEventListener('input',updateLifeResult);
-document.querySelectorAll('[data-snapshot-sort]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelector('#sort').value=btn.dataset.snapshotSort;document.querySelector('#budget').value='9999';document.querySelector('#status').value='priced';resetAndRender();document.querySelector('#finder').scrollIntoView({behavior:'smooth'});}));
+const snapshotLabels={
+  total:'6年間学費が安い順',
+  first:'初年度負担が安い順',
+  burden:'生活費込みの6年間負担が安い順'
+};
+function clearSnapshotState(){
+  document.querySelectorAll('[data-snapshot-sort]').forEach(card=>{card.classList.remove('active');card.setAttribute('aria-pressed','false')});
+  const feedback=document.querySelector('#sortFeedback');
+  if(feedback){feedback.classList.remove('show');feedback.textContent='';}
+}
+function applySnapshotSort(btn){
+  const sortKey=btn.dataset.snapshotSort;
+  document.querySelector('#sort').value=sortKey;
+  document.querySelector('#budget').value='9999';
+  document.querySelector('#status').value='priced';
+  document.querySelectorAll('[data-snapshot-sort]').forEach(card=>{const active=card===btn;card.classList.toggle('active',active);card.setAttribute('aria-pressed',active?'true':'false')});
+  const feedback=document.querySelector('#sortFeedback');
+  if(feedback){feedback.textContent=`${snapshotLabels[sortKey]}に切り替えました。大学一覧をこの順で表示しています。`;feedback.classList.add('show');}
+  resetAndRender();
+  setTimeout(()=>document.querySelector('#finder').scrollIntoView({behavior:'smooth',block:'start'}),80);
+}
+document.querySelectorAll('[data-snapshot-sort]').forEach(btn=>btn.addEventListener('click',()=>applySnapshotSort(btn)));
+document.querySelector('#sort').addEventListener('input',clearSnapshotState);
 updateSnapshot();applyPrefectureDefault();render();updateCompareBar();
