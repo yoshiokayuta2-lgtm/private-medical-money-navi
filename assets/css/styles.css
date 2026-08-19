@@ -325,3 +325,24 @@
     max-height:125px;
   }
 }
+
+/* v25 header overflow fix */
+.serieshead .inner{min-width:0}
+.brand{flex:0 0 auto}
+.head-nav{min-width:0;flex:0 1 auto;gap:clamp(12px,1.7vw,26px);font-size:clamp(10px,.85vw,12px)}
+.head-nav>a{flex:0 0 auto}
+.series-switch{padding:8px 12px 9px}
+.series-switch b{font-size:11px}
+@media(max-width:1380px){
+  .serieshead .inner{gap:18px}
+  .head-nav{gap:14px}
+  .head-nav>a:last-child{display:none}
+  .brand-divider{margin:0 11px}
+  .yoshi-word{font-size:27px}
+}
+@media(max-width:1220px){
+  .head-nav>a:nth-child(4){display:none}
+}
+@media(max-width:1100px){
+  .head-nav>a:not(.series-switch){display:none}
+}
