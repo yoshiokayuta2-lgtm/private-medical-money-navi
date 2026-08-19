@@ -36,12 +36,20 @@ const data=[
 {name:'産業医科大学',place:'福岡県北九州市',pref:'福岡県',total:3049,first:591.5,badge:'修学資金',status:'公式確認済み・特殊制度',tags:['修学資金','産業医','実質負担'],tip:'2026年度予定額は学生納入金6年間3,049万円。修学資金貸与総額1,919.32万円を差し引くと実質負担は約1,129.68万円。返還免除には勤務条件がある。',special:'修学資金貸与制度あり。所定の産業医等勤務で返還免除',installment:'授業料等は前・後学期で納付',extra:'入学手続時の諸会費・保険料20.78万円',url:'https://www.uoeh-u.ac.jp/University/College/kokai/tuition.html'},
 {name:'福岡大学',place:'福岡県福岡市',pref:'福岡県',total:3773.826,first:862.671,badge:'2026公式',status:'公式確認済み',tags:['九州','FUスカラシップ','分納'],tip:'2026年度入学生の大学案内では、初年度862.671万円。委託徴収金を含む入学から卒業までの納入予定額は3,773.826万円。',special:'対象入試の成績優秀者を対象とするFUスカラシップあり',installment:'授業料・教育充実費は第1期・第2期の分納制',extra:'6年間総計には委託徴収金を含む。教科書代等は別途',url:'https://www.fukuoka-u.ac.jp/fukudai2026/pageindices/index170.html'}
 ];
-const pricedCount=data.filter(x=>x.total!=null).length;
-const verifiedSpecialCount=data.filter(x=>x.total==null&&x.status.includes('公式確認済み')).length;
+const COST_ONLY_HIDDEN_RE=/(特待|奨学|修学資金|地域枠|減免|給付|貸与|返還免除|勤務義務|実質負担)/;
+function costOnlyTags(tags=[]){return tags.filter(t=>!COST_ONLY_HIDDEN_RE.test(t));}
+function costOnlyTip(text=''){return text.split(/(?<=。)/).filter(s=>s.trim()&&!COST_ONLY_HIDDEN_RE.test(s)).join('').trim();}
+const publicData=data.filter(x=>x.name!=='自治医科大学').map(x=>{
+  const y={...x,tags:costOnlyTags(x.tags),tip:costOnlyTip(x.tip),special:''};
+  if(y.name==='日本医科大学'&&COST_ONLY_HIDDEN_RE.test(y.badge)) y.badge='東京';
+  if(y.name==='産業医科大学'){y.badge='2026公式';y.status='公式確認済み';}
+  return y;
+});
+const pricedCount=publicData.filter(x=>x.total!=null).length;
 const progressText=document.querySelector('#progressText');
-if(progressText) progressText.textContent=`学費掲載済み${pricedCount}校＋特殊制度確認済み${verifiedSpecialCount}校／全国候補${data.length}校`;
+if(progressText) progressText.textContent=`学費比較データ ${pricedCount}校を掲載`;
 const progressBar=document.querySelector('#progressBar');
-if(progressBar) progressBar.style.width=((pricedCount+verifiedSpecialCount)/data.length*100).toFixed(1)+'%';
+if(progressBar) progressBar.style.width='100%';
 let selected=[];
 let visibleCount=8;
 let lastFilteredCount=0;
@@ -71,7 +79,7 @@ function defaultLife(x){const rent=prefRent30[x.pref]||59656;return Math.max(0,M
 function burden(x){return x.total==null?null:x.total+defaultLife(x)*72}
 function rankAmongPriced(x,key){
   if(x.total==null)return null;
-  const priced=data.filter(d=>d.total!=null);
+  const priced=publicData.filter(d=>d.total!=null);
   const sorted=[...priced].sort((a,b)=>{const av=key==='burden'?burden(a):a[key],bv=key==='burden'?burden(b):b[key];return (av??99999)-(bv??99999)});
   const idx=sorted.findIndex(d=>d.name===x.name);return idx>=0?idx+1:null;
 }
@@ -85,14 +93,14 @@ function costInsight(x){
   return `学費${tr}位／生活費込み${br}位。大きな順位差はありません。`;
 }
 function updateSnapshot(){
-  const priced=data.filter(x=>x.total!=null);
+  const priced=publicData.filter(x=>x.total!=null);
   const minTotal=[...priced].sort((a,b)=>a.total-b.total)[0];
   const minFirst=[...priced].filter(x=>x.first!=null).sort((a,b)=>a.first-b.first)[0];
   const minBurden=[...priced].sort((a,b)=>burden(a)-burden(b))[0];
   if(minTotal){document.querySelector('#snapTotal').textContent=yen(minTotal.total);document.querySelector('#snapTotalName').textContent=minTotal.name;}
   if(minFirst){document.querySelector('#snapFirst').textContent=yen(minFirst.first);document.querySelector('#snapFirstName').textContent=minFirst.name;}
   if(minBurden){document.querySelector('#snapBurden').textContent=yen(burden(minBurden));document.querySelector('#snapBurdenName').textContent=minBurden.name+'（概算）';}
-  const stat=document.querySelector('#statCount');if(stat)stat.textContent=data.length+'校';
+  const stat=document.querySelector('#statCount');if(stat)stat.textContent=publicData.length+'校';
 }
 
 function getFiltered(){
@@ -100,9 +108,9 @@ function getFiltered(){
   const budget=+document.querySelector('#budget').value;
   const sort=document.querySelector('#sort').value;
   const status=document.querySelector('#status').value;
-  let arr=data.filter(x=>{
+  let arr=publicData.filter(x=>{
     const text=(x.name+x.place+x.tags.join('')+x.status).toLowerCase();
-    const statusOk=status==='all'||(status==='priced'&&x.total!=null)||(status==='verified'&&x.status.includes('公式'))||(status==='special'&&x.status.includes('特殊制度'));
+    const statusOk=status==='all'||(status==='priced'&&x.total!=null)||(status==='verified'&&x.status.includes('公式'));
     const budgetOk=x.total==null?budget===9999:x.total<=budget;
     return text.includes(q)&&statusOk&&budgetOk;
   });
@@ -124,8 +132,8 @@ function render(){
   document.querySelector('#cards').innerHTML=shown.map(x=>{
     const totalRank=rankAmongPriced(x,'total');
     const burdenRank=rankAmongPriced(x,'burden');
-    const extraText=x.extra&&x.extra.trim()?x.extra:'公式公開資料で金額確認中';
-    return `<article class="card ${x.total==null&&!x.status.includes('公式確認済み')?'pendingcard':''}"><div class="topline"><span><span class="badge">${x.badge}</span></span><span class="rank">${x.total==null?'SPECIAL':'学費 #'+totalRank}</span></div><h3>${x.name}</h3><div class="place">${x.place}</div><div class="primarymoney ${x.total==null?'pendingmoney':''}"><span>${x.total==null?'学費の扱い':'6年間学費'}</span><b>${x.total==null?'修学資金制度':yen(x.total)}</b><small>${x.total==null?'通常の学費ランキング外':'大学公表額ベース'}</small></div><div class="minimoney"><div class="${x.first==null?'pendingmoney':''}"><span>初年度</span><b>${x.first==null?'制度対象':yen(x.first)}</b></div><div><span>生活費 初期値</span><b>月${defaultLife(x)}万円</b><small>県平均ベース</small></div><div class="${x.total==null?'pendingmoney':''}"><span>生活費込み</span><b>${x.total==null?'条件で変動':yen(burden(x))}</b>${x.total==null?'':`<small>総負担 #${burdenRank}</small>`}</div></div><div class="cost-insight">${escapeHtml(costInsight(x))}</div><div class="extra-callout"><span>先に確認したい別途費用</span><b>${escapeHtml(extraText)}</b></div><div class="tags">${x.tags.slice(0,3).map(t=>`<span class="tag">${t}</span>`).join('')}</div><details class="tipdetails"><summary>制度・注意点を詳しく見る</summary><div class="tipbody">${x.tip}</div></details><div class="actions">${x.url?`<a class="btn primary" target="_blank" rel="noopener" href="${x.url}">公式で確認</a>`:`<span class="btn" aria-disabled="true">公式資料を調査中</span>`}<button class="btn ${selected.includes(x.name)?'selected':''}" ${x.total==null?'disabled title="学費確認後に比較できます"':''} data-compare="${escapeHtml(x.name)}">${x.total==null?'比較準備中':selected.includes(x.name)?'比較から外す':'比較に追加'}</button></div></article>`;
+    const extraText=x.extra&&x.extra.trim()?x.extra:'金額の明示なし／最新募集要項で確認';
+    return `<article class="card"><div class="topline"><span><span class="badge">${x.badge}</span></span><span class="rank">学費 #${totalRank}</span></div><h3>${x.name}</h3><div class="place">${x.place}</div><div class="primarymoney"><span>6年間学費</span><b>${yen(x.total)}</b><small>大学公表額ベース</small></div><div class="minimoney"><div><span>初年度</span><b>${yen(x.first)}</b></div><div><span>生活費 初期値</span><b>月${defaultLife(x)}万円</b><small>県平均ベース</small></div><div><span>生活費込み</span><b>${yen(burden(x))}</b><small>総負担 #${burdenRank}</small></div></div><div class="cost-insight">${escapeHtml(costInsight(x))}</div><div class="extra-callout"><span>先に確認したい別途費用</span><b>${escapeHtml(extraText)}</b></div><div class="tags">${x.tags.slice(0,3).map(t=>`<span class="tag">${t}</span>`).join('')}</div>${x.tip?`<details class="tipdetails"><summary>費用・注意点を詳しく見る</summary><div class="tipbody">${escapeHtml(x.tip)}</div></details>`:''}<div class="actions">${x.url?`<a class="btn primary" target="_blank" rel="noopener" href="${x.url}">公式で確認</a>`:`<span class="btn" aria-disabled="true">公式資料を確認</span>`}<button class="btn ${selected.includes(x.name)?'selected':''}" data-compare="${escapeHtml(x.name)}">${selected.includes(x.name)?'比較から外す':'比較に追加'}</button></div></article>`;
   }).join('')||'<p>条件に合う大学がありません。</p>';
   document.querySelectorAll('[data-compare]').forEach(btn=>btn.addEventListener('click',()=>toggleCompare(btn.dataset.compare)));
 }
@@ -134,8 +142,8 @@ function resetAndRender(){visibleCount=8;render()}
 function openCompare(){
   if(selected.length<2)return;
   document.querySelector('#comparemodal').setAttribute('aria-hidden','false');
-  const items=selected.map(n=>data.find(x=>x.name===n)).filter(Boolean);
-  const rows=[['所在地','place'],['6年間学費','total'],['初年度納入額','first'],['所在地別生活費の初期値','lifeDefault'],['学費＋6年間生活費の目安','burden'],['確認できた別途費用','extra'],['特待・減免','special'],['分納・延納','installment']];
+  const items=selected.map(n=>publicData.find(x=>x.name===n)).filter(Boolean);
+  const rows=[['所在地','place'],['6年間学費','total'],['初年度納入額','first'],['所在地別生活費の初期値','lifeDefault'],['学費＋6年間生活費の目安','burden'],['確認できた別途費用','extra']];
   let html='<table class="comparetable"><thead><tr><th>比較項目</th>'+items.map(x=>`<th><div class="compareunihead"><span>${escapeHtml(x.name)}</span><button type="button" data-modal-remove="${escapeHtml(x.name)}">外す</button></div></th>`).join('')+'</tr></thead><tbody>';
   for(const [label,key] of rows){html+=`<tr><th class="rowlabel">${label}</th>`+items.map(x=>`<td data-label="${escapeHtml(x.name)}">${key==='total'||key==='first'?yen(x[key]):key==='lifeDefault'?'月'+defaultLife(x)+'万円':key==='burden'?yen(burden(x)):escapeHtml(x[key])}</td>`).join('')+'</tr>'}
   html+='<tr><th class="rowlabel">公式情報</th>'+items.map(x=>`<td data-label="${escapeHtml(x.name)}"><a class="btn primary" target="_blank" rel="noopener" href="${x.url}">公式で確認</a></td>`).join('')+'</tr></tbody></table>';
@@ -156,21 +164,21 @@ const prefRent30={"東京都":64606,"神奈川県":52623,"埼玉県":46201,"千�
 const life=document.querySelector('#life');
 const calcUniversity=document.querySelector('#calcUniversity');
 function updateLifeResult(){
-  const uni=data.find(x=>x.name===calcUniversity.value)||data[0];
+  const uni=publicData.find(x=>x.name===calcUniversity.value)||publicData[0];
   const v=+life.value;
   document.querySelector('#lifeLabel').textContent=v+'万円';
   document.querySelector('#resultUniversity').textContent=uni.name;
   document.querySelector('#grand').textContent=yen(uni.total+v*72);
 }
 function applyPrefectureDefault(){
-  const uni=data.find(x=>x.name===calcUniversity.value)||data[0];
+  const uni=publicData.find(x=>x.name===calcUniversity.value)||publicData[0];
   const rent=prefRent30[uni.pref]||59656;
   const initial=defaultLife(uni);
   life.value=initial;
   document.querySelector('#rentNote').innerHTML='<b>'+uni.pref+'の家賃目安：</b>'+Math.round(rent/1000).toLocaleString()+'千円／月（30㎡換算）<br>食費・光熱費など5.5万円を加え、月'+initial+'万円から開始します。';
   updateLifeResult();
 }
-calcUniversity.innerHTML=data.filter(x=>x.total!=null).map(x=>'<option value="'+escapeHtml(x.name)+'">'+escapeHtml(x.name)+'（'+escapeHtml(x.pref)+'）</option>').join('');
+calcUniversity.innerHTML=publicData.filter(x=>x.total!=null).map(x=>'<option value="'+escapeHtml(x.name)+'">'+escapeHtml(x.name)+'（'+escapeHtml(x.pref)+'）</option>').join('');
 calcUniversity.addEventListener('change',applyPrefectureDefault);
 life.addEventListener('input',updateLifeResult);
 const snapshotLabels={
