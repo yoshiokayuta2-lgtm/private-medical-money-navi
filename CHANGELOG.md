@@ -98,3 +98,7 @@
 - キーワード検索の入力文字列はAnalyticsへ送らない設計に変更
 - `ANALYTICS_SETUP.md` にGA4作成・検証・キーイベント候補を整理
 - テーマカラーmetaを私立医学部サイトのオレンジへ修正
+
+## 2026-08-19 — v24
+- Google Analytics 4 測定ID `G-ZBNWTZ44QW` を設定
+- GitHub Pages公開後すぐにGA4計測を開始できる状態へ更新
