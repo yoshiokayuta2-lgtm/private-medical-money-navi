@@ -90,3 +90,11 @@
 - @yoshi.daigaku_navi へのリンクを新しいタブで開く仕様に設定
 - フッターにもInstagram導線を追加
 - スマホではCTAを縦積み・全幅ボタンに最適化
+
+## 2026-08-19 — v23
+- Google Analytics 4 の導入準備を追加
+- `assets/js/analytics-config.js` の測定ID1か所で有効化できる構成に変更
+- 比較、検索、絞り込み、生活費試算、大学公式リンク、Instagram、シリーズ移動のカスタムイベントを追加
+- キーワード検索の入力文字列はAnalyticsへ送らない設計に変更
+- `ANALYTICS_SETUP.md` にGA4作成・検証・キーイベント候補を整理
+- テーマカラーmetaを私立医学部サイトのオレンジへ修正
